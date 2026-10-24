@@ -1056,7 +1056,8 @@
 
 /* ── Mobile responsive ── */
 
-@media (max-width: 500px) {
+/* Android touch browsers may expose a desktop-sized CSS viewport on a phone. */
+@media (max-width: 500px), (hover: none) and (pointer: coarse) and (max-width: 1200px) {
 
   /* 用户在设置里显式开启「显示系统状态栏」且运行时不在全屏时，控制器才会挂
      data-pwa-display-mode 标记（见 pwa-manifest-injector）：此时所有 App 共用系统
@@ -1091,6 +1092,7 @@
        browser chrome expands/collapses (100lvh can extend beneath the toolbar). */
     --phone-screen-height: 100vh;
     --phone-screen-height: 100dvh;
+    --mobile-viewport-fit-scale: 1;
     --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   }
 
@@ -1137,7 +1139,7 @@
        .app-root 被裁掉，底部栏随之顶回可视区。上移量可在「状态栏」弹窗里按设备调节，
        让它约等于真实状态栏高度即可铺满。0 = 不上移（iOS 等能全屏的浏览器保持 0）。 */
     margin-top: calc(-1 * var(--status-bar-drop, 0px));
-    transform: translate3d(0, calc(-1 * var(--mobile-keyboard-lift, 0px)), 0);
+    transform: translate3d(0, calc(-1 * var(--mobile-keyboard-lift, 0px)), 0) scale(var(--mobile-viewport-fit-scale, 1));
     /* 移除 transform 过渡动画：Android 键盘弹出后该过渡会让 .phone-shell-wrap 在
        点击交互期间持续移动（pointerdown→pointerup 间按钮被顶走数十像素），导致
        Chrome 判断 pointerdown 与 pointerup 命中不同元素、click 落到 app-root 而
