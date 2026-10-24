@@ -284,6 +284,15 @@ class MainActivity : AppCompatActivity() {
             databaseEnabled = true
             mediaPlaybackRequiresUserGesture = false
             allowFileAccess = false
+            // Respect the page's device-width viewport on compact/high-density Android phones.
+            // Without this, pages missing or misreading viewport metadata may render at a
+            // desktop-like width and get clipped horizontally inside the shell.
+            useWideViewPort = true
+            loadWithOverviewMode = false
+            setSupportZoom(false)
+            builtInZoomControls = false
+            displayZoomControls = false
+            textZoom = 100
             userAgentString = "$userAgentString FloatShell/$VERSION"
         }
         CookieManager.getInstance().setAcceptCookie(true)
