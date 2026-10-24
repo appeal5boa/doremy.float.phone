@@ -1056,7 +1056,9 @@
 
 /* ── Mobile responsive ── */
 
-@media (max-width: 500px) {
+/* Some Android WebViews report a wider CSS layout viewport than the physical phone width.
+   Keep the phone-shell layout active up to 600px so it does not fall back to desktop sizing. */
+@media (max-width: 600px) {
 
   /* 用户在设置里显式开启「显示系统状态栏」且运行时不在全屏时，控制器才会挂
      data-pwa-display-mode 标记（见 pwa-manifest-injector）：此时所有 App 共用系统
