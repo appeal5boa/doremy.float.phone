@@ -1053,7 +1053,7 @@ function useAndroidNativeKeyboardViewport() {
     if (!/Android/i.test(navigator.userAgent)) {
       return;
     }
-    const mobileMq = window.matchMedia("(max-width: 500px) and (hover: none) and (pointer: coarse)");
+    const mobileMq = window.matchMedia("(hover: none) and (pointer: coarse) and (max-width: 1200px)");
     if (!mobileMq.matches) {
       return;
     }
@@ -1067,6 +1067,15 @@ function useAndroidNativeKeyboardViewport() {
       if (!mobileMq.matches) {
         return;
       }
+      // On Android touch devices, correct a desktop-width layout viewport by fitting
+      // the shell to the actual screen width. Devices with a normal viewport remain 1:1.
+      const screenWidth = window.screen.width;
+      const viewportWidth = window.innerWidth;
+      const fitScale = screenWidth > 0 && viewportWidth > screenWidth * 1.12
+        ? Math.min(1, screenWidth / viewportWidth)
+        : 1;
+      root.style.setProperty("--mobile-viewport-fit-scale", String(fitScale));
+
       // innerHeight 明显小于历史最大值 = 键盘已让浏览器原生压缩布局视口。
       // 打上标记，供 useAndroidCaretKeyboardLift 关闭手动抬升，避免双重补偿产生中间空白。
       maxInnerHeight = Math.max(maxInnerHeight, window.innerHeight);
@@ -1078,7 +1087,7 @@ function useAndroidNativeKeyboardViewport() {
       // 手机壳有 -status-bar-drop 的负 margin-top，高度补上这段才能让底栏贴住视口底/键盘顶
       const wrap = document.querySelector<HTMLElement>(".phone-shell-wrap");
       const drop = wrap ? (parseFloat(getComputedStyle(wrap).getPropertyValue("--status-bar-drop")) || 0) : 0;
-      root.style.setProperty("--phone-screen-height", `${Math.round(window.innerHeight + drop)}px`);
+      root.style.setProperty("--phone-screen-height", `${Math.round((window.innerHeight + drop) / fitScale)}px`);
     };
 
     const requestApply = () => {
@@ -1109,6 +1118,7 @@ function useAndroidNativeKeyboardViewport() {
       observer.disconnect();
       delete root.dataset.nativeKbResize;
       root.style.removeProperty("--phone-screen-height");
+      root.style.removeProperty("--mobile-viewport-fit-scale");
     };
   }, []);
 }
