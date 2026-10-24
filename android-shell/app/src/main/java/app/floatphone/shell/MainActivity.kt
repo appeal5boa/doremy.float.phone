@@ -76,6 +76,9 @@ class MainActivity : AppCompatActivity() {
     @Volatile
     private var statusBarHeightCssPx: Int = 0
 
+    /** 系统导航栏/手势区高度（物理像素），用于避免 WebView 内容被底部系统区域覆盖。 */
+    private var navigationBarInsetPx: Int = 0
+
     /** 当前键盘（IME）高度（物理像素），0 = 键盘收起；用于给 WebView 让出底部空间。 */
     private var imeInsetPx: Int = 0
 
@@ -284,6 +287,15 @@ class MainActivity : AppCompatActivity() {
             databaseEnabled = true
             mediaPlaybackRequiresUserGesture = false
             allowFileAccess = false
+            // Respect the page's device-width viewport on compact/high-density Android phones.
+            // Without this, pages missing or misreading viewport metadata may render at a
+            // desktop-like width and get clipped horizontally inside the shell.
+            useWideViewPort = true
+            loadWithOverviewMode = false
+            setSupportZoom(false)
+            builtInZoomControls = false
+            displayZoomControls = false
+            textZoom = 100
             userAgentString = "$userAgentString FloatShell/$VERSION"
         }
         CookieManager.getInstance().setAcceptCookie(true)
@@ -462,14 +474,17 @@ class MainActivity : AppCompatActivity() {
                 injectStatusBarHeight()
             }
 
-            // 键盘避让：setDecorFitsSystemWindows(false) 后 adjustResize 不再由系统代劳，
-            // 网页侧 interactiveWidget("resizes-content") 在 WebView 里同样不生效，
-            // 于是输入框被键盘盖住。这里把 IME 高度写成容器底部内边距，WebView 变矮，
-            // 网页 resize 后输入栏自然贴在键盘上方。
+            // 底部安全区：edge-to-edge 下 WebView 可能绘制到系统手势/导航栏下方。
+            // IME 展开时用更大的键盘 inset，收起时至少保留导航栏 inset，避免底部按钮被挡。
+            val navPx = insets
+                .getInsetsIgnoringVisibility(WindowInsetsCompat.Type.navigationBars()).bottom
             val imePx = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
-            if (imePx != imeInsetPx) {
+            if (navPx != navigationBarInsetPx || imePx != imeInsetPx) {
+                navigationBarInsetPx = navPx
                 imeInsetPx = imePx
-                if (::rootContainer.isInitialized) rootContainer.setPadding(0, 0, 0, imePx)
+                if (::rootContainer.isInitialized) {
+                    rootContainer.setPadding(0, 0, 0, maxOf(navPx, imePx))
+                }
             }
             insets
         }
